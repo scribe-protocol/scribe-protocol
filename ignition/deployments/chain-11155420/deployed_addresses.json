@@ -1,0 +1,6 @@
+{
+  "ProxyModule#IdentityManagement": "0x7E56c325e8D0E92d86D26c74Eb00e1b746d7c91a",
+  "ProxyModule#TransparentUpgradeableProxy": "0x78E0531C3879Fb0db541bA561EFEd3a0B0f8aA17",
+  "ProxyModule#ProxyAdmin": "0x0c9396AA1c7BE7737C95a0c07A4ff49cBAf95a11",
+  "IdentityManagementModule#IdentityManagement": "0x78E0531C3879Fb0db541bA561EFEd3a0B0f8aA17"
+}
