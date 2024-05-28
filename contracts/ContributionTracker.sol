@@ -2,10 +2,16 @@
 pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "./VersionControl.sol";
 import "./IdentityManagement.sol";
 
-contract ContributionTracker is Initializable {
+contract ContributionTracker is
+    Initializable,
+    UUPSUpgradeable,
+    OwnableUpgradeable
+{
     struct Contribution {
         string ipfsHash;
         uint256 contributorSid;
@@ -17,8 +23,8 @@ contract ContributionTracker is Initializable {
     mapping(string => Contribution) public contributions; // Map ipfsHash to Contribution
     mapping(uint256 => string[]) public contributionsBySid; // Map sid to array of ipfsHashes
 
-    VersionControl public versionControl;
-    IdentityManagement public identityManagement;
+    address public versionControlProxy;
+    address public identityManagementProxy;
 
     event ContributionRegistered(
         string ipfsHash,
@@ -29,22 +35,35 @@ contract ContributionTracker is Initializable {
     event ContributionVerified(string ipfsHash);
 
     function initialize(
-        address versionControlAddress,
-        address identityManagementAddress
+        address initialOwner,
+        address versionControlProxyAddress,
+        address identityManagementProxyAddress
     ) public initializer {
-        versionControl = VersionControl(versionControlAddress);
-        identityManagement = IdentityManagement(identityManagementAddress);
+        __Ownable_init(initialOwner);
+        __UUPSUpgradeable_init();
+
+        versionControlProxy = versionControlProxyAddress;
+        identityManagementProxy = identityManagementProxyAddress;
     }
+
+    function _authorizeUpgrade(
+        address newImplementation
+    ) internal override onlyOwner {}
 
     function registerContribution(
         string memory ipfsHash,
         string memory description
     ) public {
-        uint256 contributorSid = identityManagement.getSid(msg.sender);
+        uint256 contributorSid = IdentityManagement(identityManagementProxy)
+            .getSid(msg.sender);
         require(contributorSid != 0, "User not registered");
 
         require(
-            bytes(versionControl.getVersion(ipfsHash).ipfsHash).length != 0,
+            bytes(
+                VersionControl(versionControlProxy)
+                    .getVersion(ipfsHash)
+                    .ipfsHash
+            ).length != 0,
             "Version does not exist"
         );
 

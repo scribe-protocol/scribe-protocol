@@ -6,7 +6,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-contract IdentityManagement is Initializable {
+contract IdentityManagement is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     mapping(address => uint256) private addressToSid;
     mapping(uint256 => address) private sidToAddress;
     uint256 private nextSid;
@@ -14,9 +14,13 @@ contract IdentityManagement is Initializable {
     event SidRegistered(address indexed userAddress, uint256 sid);
     event SidTransferred(uint256 indexed sid, address indexed oldAddress, address indexed newAddress);
 
-    function initialize() public initializer {
+    function initialize(address initialOwner) public initializer {
+        __Ownable_init(initialOwner);
+        __UUPSUpgradeable_init();
         nextSid = 1; // Start SIDs from 1
     }
+
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
     function register() public {
         require(addressToSid[msg.sender] == 0, "User already registered");
@@ -43,5 +47,4 @@ contract IdentityManagement is Initializable {
     function getAddress(uint256 sid) public view returns (address) {
         return sidToAddress[sid];
     }
-
 }
